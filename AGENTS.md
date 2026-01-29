@@ -1,65 +1,258 @@
 # AGENTS.md - RAG Agent 项目指南
 
-## 项目概述
+本文档为 AI 编码助手（Antigravity 等）提供项目规范和操作指引。
 
-这是一个 Agentic RAG 项目，使用 LangGraph + FastAPI + DeepSeek，带有自我反思能力。
+## 目录
 
-## 技术栈
+1. [强制规则](#强制规则)
+2. [项目结构](#项目结构)
+3. [开发规范](#开发规范)
+4. [操作指南](#操作指南)
+5. [Agent 架构](#agent-架构)
+
+---
+
+## 强制规则
+
+### 代码变更验证
+
+修改以下内容后，**必须**运行验证流程：
+
+- `app/` 下的任何代码
+- `pyproject.toml` 或依赖配置
+- 测试文件
+
+**验证命令（按顺序执行）：**
+
+```bash
+uv run ruff format .          # 格式化
+uv run ruff check . --fix     # lint 并自动修复
+uv run python -m pytest       # 运行测试（如有）
+```
+
+### 提交前检查
+
+- ✅ 代码已格式化
+- ✅ 无 lint 错误
+- ✅ 类型注解完整
+- ✅ 新功能有对应测试
+- ✅ 文档已更新（如涉及 API 变更）
+
+### 禁止事项
+
+- ❌ 提交 `.env` 文件（含敏感信息）
+- ❌ 硬编码 API Key
+- ❌ 未经测试的 Agent 流程变更
+
+---
+
+## 项目结构
+
+```
+rag-test/
+├── app/
+│   ├── __init__.py
+│   ├── config.py        # 配置管理（环境变量）
+│   ├── knowledge.py     # 知识检索（Tavily）
+│   ├── agent.py         # LangGraph Agent 核心逻辑
+│   └── main.py          # FastAPI 入口
+├── tests/               # 测试目录（待创建）
+├── .env                 # 环境变量（不提交）
+├── .env.example         # 环境变量模板
+├── pyproject.toml       # 项目配置
+├── AGENTS.md            # 本文件
+└── README.md            # 项目说明
+```
+
+### 关键文件说明
+
+| 文件 | 职责 | 修改注意事项 |
+|------|------|--------------|
+| `agent.py` | Agent 核心流程 | 修改后必须测试 `/chat/stream` |
+| `knowledge.py` | 知识检索 | 接口变更需同步更新 agent.py |
+| `main.py` | API 入口 | 保持 stream/non-stream 行为一致 |
+| `config.py` | 配置管理 | 新增配置需同步 .env.example |
+
+---
+
+## 开发规范
+
+### 技术栈
 
 - **Python**: 3.11+
 - **包管理**: uv
 - **框架**: FastAPI + LangGraph
 - **LLM**: DeepSeek (通过 langchain-openai)
 - **知识检索**: Tavily API
+- **格式化/Lint**: ruff
 
-## 目录结构
+### 代码风格
 
+```python
+# ✅ 正确示例
+async def search_knowledge(query: str) -> list[dict]:
+    """
+    使用 Tavily 搜索相关内容。
+    
+    Args:
+        query: 搜索查询词
+        
+    Returns:
+        检索结果列表，每项包含 content, source, score
+    """
+    ...
+
+# ❌ 错误示例
+def search(q):  # 缺少类型注解和文档
+    ...
 ```
-rag-test/
-├── app/
-│   ├── __init__.py
-│   ├── config.py      # 配置管理（环境变量）
-│   ├── knowledge.py   # 知识检索（Tavily）
-│   ├── agent.py       # LangGraph Agent 核心逻辑
-│   └── main.py        # FastAPI 入口
-├── .env               # 环境变量（不提交）
-├── .env.example       # 环境变量模板
-└── pyproject.toml     # 项目配置
-```
 
-## 代码规范
+### 命名规范
 
-### 风格
-- 使用 **中文注释** 和 docstring
-- 遵循 PEP 8，但行宽放宽到 100
-- 类型注解必须写
-
-### 命名
-- 函数/变量: `snake_case`
-- 类: `PascalCase`
-- 常量: `UPPER_SNAKE_CASE`
+| 类型 | 规范 | 示例 |
+|------|------|------|
+| 函数/变量 | snake_case | `search_knowledge`, `need_knowledge` |
+| 类 | PascalCase | `AgentState`, `ChatRequest` |
+| 常量 | UPPER_SNAKE_CASE | `MAX_ITERATIONS`, `DEEPSEEK_MODEL` |
 
 ### 导入顺序
-1. 标准库
-2. 第三方库
-3. 本地模块
+
+```python
+# 1. 标准库
+import sys
+from pathlib import Path
+
+# 2. 第三方库
+from fastapi import FastAPI
+from langchain_openai import ChatOpenAI
+
+# 3. 本地模块
+from app.config import DEEPSEEK_API_KEY
+from app.knowledge import search_knowledge
+```
+
+### 注释语言
+
+- 代码注释：**中文**
+- Docstring：**中文**
+- Git commit：**英文**（遵循 conventional commits）
+
+---
+
+## 操作指南
+
+### 环境设置
+
+```bash
+# 克隆并进入项目
+cd ~/rag-test
+
+# 安装依赖
+uv sync
+
+# 配置环境变量
+cp .env.example .env
+# 编辑 .env 填入 API Key
+```
+
+### 开发服务器
+
+```bash
+# 启动开发服务器（热重载）
+uv run python -m app.main
+
+# 访问 API 文档
+open http://localhost:8000/docs
+```
+
+### 测试流式输出
+
+```bash
+curl -N -X POST http://localhost:8000/chat/stream \
+  -H "Content-Type: application/json" \
+  -d '{"message": "2024年诺贝尔物理学奖是谁"}'
+```
+
+### 常用命令
+
+| 命令 | 说明 |
+|------|------|
+| `uv sync` | 同步依赖 |
+| `uv add <pkg>` | 添加依赖 |
+| `uv run python -m app.main` | 启动服务 |
+| `uv run ruff format .` | 格式化代码 |
+| `uv run ruff check .` | 检查代码 |
+| `uv run pytest` | 运行测试 |
+
+### Git 工作流
+
+```bash
+# 1. 创建功能分支
+git checkout -b feat/xxx
+
+# 2. 开发并验证
+uv run ruff format .
+uv run ruff check . --fix
+
+# 3. 提交（使用 conventional commits）
+git commit -m "feat: add xxx feature"
+git commit -m "fix: resolve xxx issue"
+git commit -m "docs: update xxx documentation"
+
+# 4. 推送
+git push origin feat/xxx
+```
+
+---
 
 ## Agent 架构
 
+### 流程图
+
 ```
-START → check → retrieve → generate → reflect → finalize → END
-                    ↑                      ↓
-                    └──── (不满意时循环) ────┘
+START
+  │
+  ▼
+┌─────────┐
+│  check  │ ← 判断是否需要检索
+└────┬────┘
+     │
+     ▼ (need_knowledge?)
+    ╱ ╲
+   ╱   ╲
+  YES   NO
+   │     │
+   ▼     │
+┌──────────┐   │
+│ retrieve │   │
+└────┬─────┘   │
+     │         │
+     ▼         ▼
+┌──────────────────┐
+│     generate     │ ← 生成回答
+└────────┬─────────┘
+         │
+         ▼
+┌─────────────────┐
+│     reflect     │ ← 自我评估
+└────────┬────────┘
+         │
+         ▼ (is_satisfied?)
+        ╱ ╲
+       ╱   ╲
+     YES    NO ──→ 返回 check（最多 3 轮）
+      │
+      ▼
+┌──────────┐
+│ finalize │
+└────┬─────┘
+     │
+     ▼
+    END
 ```
 
-### 节点说明
-- **check**: 判断是否需要检索外部知识
-- **retrieve**: 调用 Tavily 搜索
-- **generate**: 用 DeepSeek 生成回答
-- **reflect**: 自我评估回答质量
-- **finalize**: 输出最终结果
+### 状态定义
 
-### 状态字段
 ```python
 class AgentState(TypedDict):
     messages: list              # 对话历史
@@ -68,37 +261,91 @@ class AgentState(TypedDict):
     current_answer: str         # 当前生成的回答
     reflection: str             # 反思意见
     is_satisfied: bool          # 是否满意当前回答
-    iteration: int              # 当前迭代轮次
+    iteration: int              # 当前迭代轮次（最大 3）
 ```
+
+### 节点说明
+
+| 节点 | 职责 | 输入 | 输出 |
+|------|------|------|------|
+| check | 判断是否需要外部知识 | messages | need_knowledge |
+| retrieve | 调用 Tavily 搜索 | messages, reflection | knowledge_context |
+| generate | 用 DeepSeek 生成回答 | messages, knowledge_context | current_answer |
+| reflect | 评估回答质量 | current_answer, knowledge_context | is_satisfied, reflection |
+| finalize | 输出最终回答 | current_answer | messages |
+
+### 扩展指南
+
+#### 添加新节点
+
+1. 在 `agent.py` 定义异步函数：
+   ```python
+   async def my_node(state: AgentState) -> AgentState:
+       # 处理逻辑
+       return {**state, "new_field": value}
+   ```
+
+2. 注册节点：
+   ```python
+   graph.add_node("my_node", my_node)
+   ```
+
+3. 连接边：
+   ```python
+   graph.add_edge("previous_node", "my_node")
+   ```
+
+#### 添加新工具
+
+1. 在 `app/` 下创建模块（如 `app/tools/wikipedia.py`）
+2. 在 `agent.py` 导入并在相应节点中调用
+3. 更新 `.env.example` 如需新配置
+
+---
 
 ## API 接口
 
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `/` | GET | 健康检查 |
-| `/health` | GET | 健康检查 |
-| `/chat` | POST | 聊天（非流式） |
-| `/chat/stream` | POST | 聊天（SSE 流式） |
+| 端点 | 方法 | 说明 | 响应类型 |
+|------|------|------|----------|
+| `/` | GET | 健康检查 | JSON |
+| `/health` | GET | 健康检查 | JSON |
+| `/chat` | POST | 聊天（非流式） | JSON |
+| `/chat/stream` | POST | 聊天（流式） | SSE |
 
-## 开发指南
+### 请求示例
 
-### 运行开发服务器
-```bash
-cd ~/rag-test
-uv run python -m app.main
+```json
+{
+  "message": "2024年诺贝尔物理学奖是谁获得的"
+}
 ```
 
-### 添加新节点
-1. 在 `agent.py` 中定义节点函数
-2. 用 `graph.add_node()` 注册
-3. 用 `graph.add_edge()` 或 `add_conditional_edges()` 连接
+### 响应示例（非流式）
 
-### 添加新工具
-1. 在 `app/` 下创建新模块
-2. 在 `agent.py` 中导入并集成
+```json
+{
+  "reply": "2024年诺贝尔物理学奖...",
+  "used_knowledge": true,
+  "iterations": 1
+}
+```
+
+### 响应示例（流式 SSE）
+
+```
+data: {"step": "check", "detail": "需要检索知识: 是"}
+data: {"step": "retrieve", "detail": "检索到 1500 字符的知识"}
+data: {"step": "generate", "detail": "生成回答 (第 1 轮)", "answer": "..."}
+data: {"step": "reflect", "detail": "反思评估: 满意"}
+data: {"step": "finalize", "detail": "完成"}
+data: {"step": "done"}
+```
+
+---
 
 ## 注意事项
 
-- `.env` 包含敏感信息，**绝不提交**
+- `MAX_ITERATIONS = 3` 防止反思死循环，可按需调整
 - 修改 Agent 流程后务必测试 `/chat/stream` 确认步骤正确
-- `MAX_ITERATIONS = 3` 防止反思死循环，按需调整
+- 保持 stream/non-stream 两个接口行为一致
+- 新增环境变量时同步更新 `.env.example`
