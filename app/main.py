@@ -3,9 +3,8 @@
 import sys
 from pathlib import Path
 
-# 支持直接运行
-if __name__ == "__main__":
-    sys.path.insert(0, str(Path(__file__).parent.parent))
+# 支持直接运行时的路径处理
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import json
 from fastapi import FastAPI, HTTPException
