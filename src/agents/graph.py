@@ -1,6 +1,7 @@
 """Agent Graph 构建"""
 
 from langgraph.graph import END, START, StateGraph
+from langgraph.graph.state import CompiledStateGraph
 
 from src.agents.nodes import (
     check_node,
@@ -26,7 +27,7 @@ def route_after_reflect(state: AgentState) -> str:
     return "check"
 
 
-def build_graph():
+def build_graph() -> CompiledStateGraph:
     """构建 Agent Graph"""
     graph = StateGraph(AgentState)
 

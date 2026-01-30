@@ -1,6 +1,7 @@
 """聊天路由"""
 
 import json
+from typing import AsyncGenerator
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
@@ -26,7 +27,7 @@ def get_initial_state(message: str) -> dict:
 
 
 @router.post("", response_model=ChatResponse)
-async def chat(request: ChatRequest):
+async def chat(request: ChatRequest) -> ChatResponse:
     """聊天接口（非流式）"""
     result = await agent.ainvoke(get_initial_state(request.message))
 
@@ -34,17 +35,17 @@ async def chat(request: ChatRequest):
     reply = messages[-1].content if messages else "抱歉，我无法生成回复。"
 
     return ChatResponse(
-        reply=reply,
+        reply=str(reply),
         used_knowledge=bool(result.get("knowledge_context")),
         iterations=result.get("iteration", 1),
     )
 
 
 @router.post("/stream")
-async def chat_stream(request: ChatRequest):
+async def chat_stream(request: ChatRequest) -> StreamingResponse:
     """流式聊天接口"""
 
-    async def generate():
+    async def generate() -> AsyncGenerator[str, None]:
         try:
             async for event in agent.astream(
                 get_initial_state(request.message), stream_mode="updates"

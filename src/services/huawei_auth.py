@@ -55,7 +55,7 @@ class HuaweiAuthService:
                     token = response.headers.get("X-Subject-Token")
                     if token:
                         logger.info("Successfully retrieved Huawei Cloud token")
-                        return token
+                        return str(token)
                     else:
                         logger.error("X-Subject-Token header not found in response")
                 else:

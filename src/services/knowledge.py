@@ -9,7 +9,7 @@ from src.core.logging import logger
 class KnowledgeService:
     """知识检索服务"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.api_key = settings.tavily_api_key
         self.client = None
 
