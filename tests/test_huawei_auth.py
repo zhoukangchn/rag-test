@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from src.services.huawei_auth import HuaweiAuthService
+from src.app.services.huawei_auth import HuaweiAuthService
 
 
 # 标记为集成测试，需要真实环境配置才能跑通

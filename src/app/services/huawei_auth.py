@@ -4,7 +4,7 @@ import logging
 
 import httpx
 
-from src.core.config import settings
+from src.app.core.config import settings
 
 logger = logging.getLogger(__name__)
 

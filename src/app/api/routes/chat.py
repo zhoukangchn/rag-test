@@ -7,8 +7,8 @@ from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import HumanMessage
 
-from src.agents.graph import agent
-from src.api.schemas import ChatRequest, ChatResponse
+from src.app.agents.graph import agent
+from src.app.api.schemas import ChatRequest, ChatResponse
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 

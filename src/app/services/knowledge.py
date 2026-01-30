@@ -2,8 +2,8 @@
 
 from tavily import AsyncTavilyClient
 
-from src.core.config import settings
-from src.core.logging import logger
+from src.app.core.config import settings
+from src.app.core.logging import logger
 
 
 class KnowledgeService:

@@ -3,7 +3,7 @@
 from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
 
-from src.core.config import settings
+from src.app.core.config import settings
 
 
 def get_llm() -> ChatOpenAI:

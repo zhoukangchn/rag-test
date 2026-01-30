@@ -11,7 +11,7 @@ class TestHealthEndpoints:
 
     def test_root(self):
         """测试根路径"""
-        from src.api.app import app
+        from src.app.main import app
 
         client = TestClient(app)
 
@@ -21,7 +21,7 @@ class TestHealthEndpoints:
 
     def test_health(self):
         """测试健康检查"""
-        from src.api.app import app
+        from src.app.main import app
 
         client = TestClient(app)
 
@@ -35,7 +35,7 @@ class TestChatEndpoint:
 
     def test_chat_request_validation(self):
         """测试请求验证"""
-        from src.api.app import app
+        from src.app.main import app
 
         client = TestClient(app)
 
@@ -46,9 +46,9 @@ class TestChatEndpoint:
     @pytest.mark.asyncio
     async def test_chat_success(self):
         """测试聊天成功响应"""
-        from src.api.app import app
+        from src.app.main import app
 
-        with patch("src.api.routes.chat.agent") as mock_agent:
+        with patch("src.app.api.routes.chat.agent") as mock_agent:
             mock_agent.ainvoke = AsyncMock(
                 return_value={
                     "messages": [type("Msg", (), {"content": "测试回复"})()],

@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.agents.nodes import check_node, retrieve_node
+from src.app.agents.nodes import check_node, retrieve_node
 
 
 class TestCheckNode:

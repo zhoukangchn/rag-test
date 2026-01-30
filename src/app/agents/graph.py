@@ -3,14 +3,14 @@
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from src.agents.nodes import (
+from src.app.agents.nodes import (
     check_node,
     finalize_node,
     generate_node,
     reflect_node,
     retrieve_node,
 )
-from src.agents.state import AgentState
+from src.app.agents.state import AgentState
 
 
 def route_after_check(state: AgentState) -> str:

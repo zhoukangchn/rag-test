@@ -2,10 +2,10 @@ from typing import Any, cast
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
-from src.agents.state import AgentState
-from src.core.config import settings
-from src.core.logging import logger
-from src.core.prompts import (
+from src.app.agents.state import AgentState
+from src.app.core.config import settings
+from src.app.core.logging import logger
+from src.app.core.prompts import (
     CHECK_PROMPT_DEFAULT,
     CHECK_PROMPT_REFLECTION,
     GENERATE_SYSTEM_PROMPT_BASE,
@@ -14,8 +14,8 @@ from src.core.prompts import (
     REFINE_PROMPT,
     REFLECT_PROMPT,
 )
-from src.services.knowledge import knowledge_service
-from src.services.llm import llm
+from src.app.services.knowledge import knowledge_service
+from src.app.services.llm import llm
 
 
 def get_last_content(messages: list) -> str:
