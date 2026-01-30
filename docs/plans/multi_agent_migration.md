@@ -15,10 +15,10 @@ Transform the existing single-agent reflective RAG loop into a modular multi-age
 - [x] Create this migration plan.
 
 ## Phase 2: Node Refactoring (Specialized Agents)
-- [ ] Create `src/app/agents/specialized_nodes.py`.
-- [ ] Implement `searcher_node` (Tavily focus).
-- [ ] Implement `writer_node` (Drafting focus).
-- [ ] Implement `reviewer_node` (Reflection focus).
+- [x] Create `src/app/agents/specialized_nodes.py`.
+- [x] Implement `searcher_node` (Tavily focus).
+- [x] Implement `writer_node` (Drafting focus).
+- [x] Implement `reviewer_node` (Reflection focus).
 
 ## Phase 3: Graph Re-construction
 - [ ] Update `src/app/agents/graph.py` to use the new multi-agent flow.

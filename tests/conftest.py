@@ -8,7 +8,7 @@ import pytest
 @pytest.fixture
 def mock_llm():
     """Mock DeepSeek LLM"""
-    with patch("src.app.agents.nodes.llm") as mock:
+    with patch("src.app.agents.specialized_nodes.llm") as mock:
         mock.ainvoke = AsyncMock(return_value=AsyncMock(content="NO"))
         yield mock
 
