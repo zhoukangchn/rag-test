@@ -1,29 +1,25 @@
-"""Agent 状态定义"""
+from typing import Any, Annotated, List, Optional
+from langchain_core.messages import add_messages
+from src.app.agents.state import AgentState
 
-from typing import Annotated, TypedDict
-
-from langgraph.graph.message import add_messages
-
-
-class AgentState(TypedDict):
-    """Agent 状态"""
-
-    # 对话历史
-    messages: Annotated[list, add_messages]
-
-    # 检索相关
-    knowledge_context: str
-    need_knowledge: bool
-
-    # 生成相关
-    current_answer: str
-
-    # 反思相关
-    reflection: str
-    is_satisfied: bool
-
-    # 控制
-    iteration: int
-
-    # 多智能体扩展
-    next_agent: str
+class WarroomState(AgentState):
+    """作战室 Agent 扩展状态"""
+    
+    # 故障基本信息
+    incident_id: str
+    incident_severity: str  # P0, P1, P2, etc.
+    incident_status: str    # open, investigating, resolved
+    
+    # 团队协作
+    assigned_team: str      # SRE, DBA, Middleware, etc.
+    warroom_channel_id: str # Slack/Discord channel ID
+    
+    # 调查进展
+    investigation_plan: List[str]
+    root_cause: Optional[str]
+    
+    # 时间轴记录 (Historian 维护)
+    timeline_logs: List[dict]  # {"timestamp": "", "event": "", "source": ""}
+    
+    # RAG 增强
+    similar_past_incidents: List[str]
