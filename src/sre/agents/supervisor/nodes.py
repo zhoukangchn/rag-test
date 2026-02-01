@@ -6,7 +6,7 @@
 from typing import Any, Dict, Literal
 from src.app.core.logging import logger
 from src.sre.agents.shared.state import SREState, IncidentStatus
-from src.sre.core.state_machine import validate_transition
+from src.sre.core.state_machine import validate_transition, get_allowed_transitions
 
 async def initialize_incident_node(state: SREState) -> Dict[str, Any]:
     """初始化事件：接收原始告警并设定初始状态"""

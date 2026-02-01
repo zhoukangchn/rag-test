@@ -131,6 +131,7 @@ class MonitorState(TypedDict):
     """Monitor Agent 内部状态"""
     
     incident_id: str
+    status: IncidentStatus             # 添加状态字段以支持动态路由
     resource_info: dict[str, Any]
     metrics_data: dict[str, Any]
     log_entries: list[dict]
@@ -142,6 +143,7 @@ class DiagnoserState(TypedDict):
     """Diagnoser Agent 内部状态"""
     
     incident_id: str
+    status: IncidentStatus             # 添加状态字段以支持动态路由
     monitor_data: MonitorState         # 引用监控数据
     knowledge_context: str
     iteration: int
@@ -155,6 +157,7 @@ class ExecutorState(TypedDict):
     """Executor Agent 内部状态"""
     
     incident_id: str
+    status: IncidentStatus             # 添加状态字段以支持动态路由
     diagnosis_report: str
     action_plan: list[ActionItem]
     pending_approval: list[ActionItem]
