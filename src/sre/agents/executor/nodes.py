@@ -9,25 +9,59 @@ from src.app.core.logging import logger
 from src.sre.agents.shared.state import ExecutorState, ActionType
 
 async def plan_actions_node(state: ExecutorState) -> Dict[str, Any]:
-    """制定操作计划"""
+    """根据诊断结果制定多维度的修复计划"""
     logger.info(f"[Executor] 正在为事件 {state['incident_id']} 制定修复计划...")
-    # TODO: 根据诊断报告生成具体的 ActionItem 列表
-    # 模拟计划
-    plan = [
-        {
+    
+    report = state.get("diagnosis_report", "")
+    plan = []
+    
+    if "I/O 阻塞" in report:
+        plan.append({
+            "id": "act-scale-db-001",
+            "type": ActionType.REMEDIATION,
+            "tool_name": "kubectl_scale",
+            "parameters": {"resource": "deployment/db-proxy", "replicas": 3},
+            "description": "扩容数据库代理以分担 I/O 压力",
+            "requires_approval": True,
+            "estimated_impact": "低",
+            "created_at": datetime.now()
+        })
+    elif "业务逻辑死循环" in report or "用户态" in report:
+        plan.append({
+            "id": "act-profile-001",
+            "type": ActionType.DIAGNOSTIC,
+            "tool_name": "py_spy_record",
+            "parameters": {"pod": "web-api-0", "duration": "30s"},
+            "description": "采集 CPU 火焰图以分析死循环位置",
+            "requires_approval": False,
+            "estimated_impact": "极低",
+            "created_at": datetime.now()
+        })
+        plan.append({
             "id": "act-restart-001",
             "type": ActionType.REMEDIATION,
             "tool_name": "restart_pod",
-            "parameters": {"pod": "web-api-0", "namespace": "prod"},
-            "description": "重启异常 Pod 以释放连接",
+            "parameters": {"pod": "web-api-0"},
+            "description": "重启服务作为临时止损手段",
             "requires_approval": True,
-            "estimated_impact": "可能会有短暂的服务闪断",
+            "estimated_impact": "中",
             "created_at": datetime.now()
-        }
-    ]
+        })
+    else:
+        plan.append({
+            "id": "act-generic-restart",
+            "type": ActionType.REMEDIATION,
+            "tool_name": "restart_pod",
+            "parameters": {"pod": "web-api-0", "namespace": "prod"},
+            "description": "常规重启以恢复服务",
+            "requires_approval": True,
+            "estimated_impact": "中",
+            "created_at": datetime.now()
+        })
+
     return {
         "action_plan": plan,
-        "requires_human_approval": True
+        "requires_human_approval": any(a["requires_approval"] for a in plan)
     }
 
 async def execute_tool_node(state: ExecutorState) -> Dict[str, Any]:

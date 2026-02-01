@@ -30,6 +30,10 @@ async def fetch_metrics_node(state: MonitorState) -> Dict[str, Any]:
             if result:
                 metrics["cpu_usage"] = float(result[0]["value"][1])
             
+            # 获取更详细的 CPU 分布 (Mock 场景下会增加这些维度)
+            metrics["cpu_iowait"] = 0.05  # 模拟 IO 等待
+            metrics["cpu_system"] = 0.15  # 模拟内核态占比
+            
             # 示例：获取内存使用率
             mem_query = '1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)'
             result = prom.custom_query(query=mem_query)
@@ -42,9 +46,11 @@ async def fetch_metrics_node(state: MonitorState) -> Dict[str, Any]:
     
     # 如果没有真实数据或获取失败，提供模拟数据兜底
     if not metrics:
-        logger.info("[Monitor] 使用模拟指标数据兜底")
+        logger.info("[Monitor] 使用增强版模拟指标数据兜底")
         metrics = {
             "cpu_usage": 0.92,
+            "cpu_iowait": 0.02,
+            "cpu_system": 0.10,
             "memory_usage": 0.78,
             "request_latency_ms": 450,
             "error_rate": 0.05

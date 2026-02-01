@@ -131,39 +131,41 @@ class MonitorState(TypedDict):
     """Monitor Agent 内部状态"""
     
     incident_id: str
-    status: IncidentStatus             # 添加状态字段以支持动态路由
+    status: IncidentStatus
     resource_info: dict[str, Any]
     metrics_data: dict[str, Any]
     log_entries: list[dict]
     time_context: dict[str, Any]
-    max_age_minutes: int               # 数据最大时间范围
+    max_age_minutes: int
 
 
 class DiagnoserState(TypedDict):
     """Diagnoser Agent 内部状态"""
     
     incident_id: str
-    status: IncidentStatus             # 添加状态字段以支持动态路由
-    monitor_data: MonitorState         # 引用监控数据
+    status: IncidentStatus
+    # 直接使用监控数据字段，保持与 SREState 一致以便于 Sub-graph 自动映射
+    metrics_data: dict[str, Any]
+    log_entries: list[dict]
     knowledge_context: str
     iteration: int
     max_iterations: int
     current_hypotheses: list[dict]
-    is_satisfied: bool                 # 是否满意诊断结果
-    reflection: str                    # 改进建议
+    is_satisfied: bool
+    reflection: str
 
 
 class ExecutorState(TypedDict):
     """Executor Agent 内部状态"""
     
     incident_id: str
-    status: IncidentStatus             # 添加状态字段以支持动态路由
+    status: IncidentStatus
     diagnosis_report: str
     action_plan: list[ActionItem]
     pending_approval: list[ActionItem]
     executed_actions: list[ActionResult]
-    requires_human_approval: bool       # 是否需要人工审批
-    current_action: ActionItem | None   # 当前执行的操作
+    requires_human_approval: bool
+    current_action: ActionItem | None
 
 
 class SupervisorState(TypedDict):
