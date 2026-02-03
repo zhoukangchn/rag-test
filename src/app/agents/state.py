@@ -1,6 +1,16 @@
-from typing import Any, Annotated, List, Optional
-from langchain_core.messages import add_messages
-from src.app.agents.state import AgentState
+from typing import Any, Annotated, List, Optional, TypedDict
+from langgraph.graph import add_messages
+
+class AgentState(TypedDict):
+    """基础 Agent 状态"""
+    messages: Annotated[list, add_messages]  # 对话历史
+    knowledge_context: str      # 检索到的知识
+    need_knowledge: bool        # 是否需要检索
+    current_answer: str         # 当前生成的回答
+    reflection: str             # 反思意见
+    is_satisfied: bool          # 是否满意当前回答
+    iteration: int              # 当前迭代轮次（最大 3）
+    next_agent: Optional[str]   # 下一个执行的 Agent
 
 class WarroomState(AgentState):
     """作战室 Agent 扩展状态"""
