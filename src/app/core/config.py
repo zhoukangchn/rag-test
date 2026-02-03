@@ -28,7 +28,20 @@ class Settings(BaseSettings):
     max_iterations: int = 3
 
     # Database
-    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/rag_test"
+    db_host: str = "localhost"
+    db_port: int = 5432
+    db_user: str = "postgres"
+    db_password: str = "postgres"
+    db_name: str = "rag_test"
+
+    @property
+    def database_url(self) -> str:
+        """根据配置生成异步数据库连接字符串"""
+        return f"postgresql+asyncpg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
+
+    # API Auth (User & Password for URL calls)
+    api_auth_username: str = ""
+    api_auth_password: str = ""
 
     # Huawei Cloud
     huawei_iam_endpoint: str = "https://iam.myhuaweicloud.com/v3/auth/tokens"
