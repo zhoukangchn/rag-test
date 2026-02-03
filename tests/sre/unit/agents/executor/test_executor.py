@@ -1,7 +1,9 @@
 """测试 Executor Agent 工作流"""
 
 import pytest
+
 from src.sre.agents.executor.graph import executor_agent
+
 
 @pytest.mark.asyncio
 async def test_executor_flow():
@@ -13,12 +15,12 @@ async def test_executor_flow():
         "pending_approval": [],
         "executed_actions": [],
         "requires_human_approval": False,
-        "current_action": None
+        "current_action": None,
     }
-    
+
     # 运行 Graph
     result = await executor_agent.ainvoke(initial_state)
-    
+
     # 验证输出
     assert len(result["action_plan"]) > 0
     assert result["action_plan"][0]["tool_name"] == "restart_pod"

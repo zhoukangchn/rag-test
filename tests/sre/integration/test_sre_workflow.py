@@ -3,18 +3,19 @@
 模拟从监控到诊断再到执行的完整闭环。
 """
 
+
 import pytest
-import asyncio
-from datetime import datetime
-from src.sre.agents.shared.state import SREState, IncidentStatus, Severity
-from src.sre.agents.monitor.graph import monitor_agent
+
 from src.sre.agents.diagnoser.graph import diagnoser_agent
 from src.sre.agents.executor.graph import executor_agent
+from src.sre.agents.monitor.graph import monitor_agent
+from src.sre.agents.shared.state import IncidentStatus, Severity
+
 
 @pytest.mark.asyncio
 async def test_full_sre_workflow_integration():
     """集成测试：手动链接三个子 Agent 的运行"""
-    
+
     # 1. 准备初始状态（模拟告警触发）
     initial_state = {
         "incident_id": "INT-TEST-999",
@@ -26,9 +27,9 @@ async def test_full_sre_workflow_integration():
         "log_entries": [],
         "time_context": {},
         "max_age_minutes": 30,
-        "status": IncidentStatus.MONITORING
+        "status": IncidentStatus.MONITORING,
     }
-    
+
     print(f"\n[Step 1] 启动 Monitor Agent (ID: {initial_state['incident_id']})...")
     # 2. 运行 Monitor Agent
     monitor_result = await monitor_agent.ainvoke(initial_state)
@@ -46,10 +47,10 @@ async def test_full_sre_workflow_integration():
         "max_iterations": 3,
         "current_hypotheses": [],
         "is_satisfied": False,
-        "reflection": ""
+        "reflection": "",
     }
-    
-    print(f"[Step 2] 启动 Diagnoser Agent...")
+
+    print("[Step 2] 启动 Diagnoser Agent...")
     diagnoser_result = await diagnoser_agent.ainvoke(diagnoser_input)
     assert len(diagnoser_result["current_hypotheses"]) > 0
     assert diagnoser_result["is_satisfied"] is True
@@ -64,10 +65,10 @@ async def test_full_sre_workflow_integration():
         "pending_approval": [],
         "executed_actions": [],
         "requires_human_approval": False,
-        "current_action": None
+        "current_action": None,
     }
-    
-    print(f"[Step 3] 启动 Executor Agent...")
+
+    print("[Step 3] 启动 Executor Agent...")
     executor_result = await executor_agent.ainvoke(executor_input)
     assert len(executor_result["action_plan"]) > 0
     assert len(executor_result["executed_actions"]) > 0

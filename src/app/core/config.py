@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     # Agent
     max_iterations: int = 3
 
+    # Database
+    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/rag_test"
+
     # Huawei Cloud
     huawei_iam_endpoint: str = "https://iam.myhuaweicloud.com/v3/auth/tokens"
     huawei_domain_name: str = ""

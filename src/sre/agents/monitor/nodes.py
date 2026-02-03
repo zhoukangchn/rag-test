@@ -3,8 +3,9 @@
 负责收集指标、分析日志和整理环境上下文。
 """
 
-from typing import Any, Dict
 import os
+from typing import Any
+
 from src.app.core.logging import logger
 from src.sre.agents.shared.state import MonitorState
 
@@ -14,10 +15,11 @@ try:
 except ImportError:
     PrometheusConnect = None
 
-async def fetch_metrics_node(state: MonitorState) -> Dict[str, Any]:
+
+async def fetch_metrics_node(state: MonitorState) -> dict[str, Any]:
     """收集相关指标数据"""
     logger.info(f"[Monitor] 正在为事件 {state['incident_id']} 获取指标...")
-    
+
     prom_url = os.getenv("PROMETHEUS_URL", "http://prometheus:9090")
     metrics = {}
 
@@ -29,21 +31,21 @@ async def fetch_metrics_node(state: MonitorState) -> Dict[str, Any]:
             result = prom.custom_query(query=cpu_query)
             if result:
                 metrics["cpu_usage"] = float(result[0]["value"][1])
-            
+
             # 获取更详细的 CPU 分布 (Mock 场景下会增加这些维度)
             metrics["cpu_iowait"] = 0.05  # 模拟 IO 等待
             metrics["cpu_system"] = 0.15  # 模拟内核态占比
-            
+
             # 示例：获取内存使用率
-            mem_query = '1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)'
+            mem_query = "1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)"
             result = prom.custom_query(query=mem_query)
             if result:
                 metrics["memory_usage"] = float(result[0]["value"][1])
-                
+
             logger.info(f"[Monitor] 成功从 {prom_url} 获取真实指标")
         except Exception as e:
             logger.error(f"[Monitor] 获取 Prometheus 指标失败: {e}")
-    
+
     # 如果没有真实数据或获取失败，提供模拟数据兜底
     if not metrics:
         logger.info("[Monitor] 使用增强版模拟指标数据兜底")
@@ -53,30 +55,30 @@ async def fetch_metrics_node(state: MonitorState) -> Dict[str, Any]:
             "cpu_system": 0.10,
             "memory_usage": 0.78,
             "request_latency_ms": 450,
-            "error_rate": 0.05
+            "error_rate": 0.05,
         }
-        
+
     return {"metrics_data": metrics}
 
-async def analyze_logs_node(state: MonitorState) -> Dict[str, Any]:
+
+async def analyze_logs_node(state: MonitorState) -> dict[str, Any]:
     """分析关联日志"""
     logger.info(f"[Monitor] 正在分析事件 {state['incident_id']} 的关联日志...")
     # TODO: 实现日志聚合与异常检测
     log_summary = "发现多条 'Connection pool exhausted' 错误日志，涉及 web-api 服务。"
     return {"log_entries": [{"level": "ERROR", "message": log_summary}]}
 
-async def gather_context_node(state: MonitorState) -> Dict[str, Any]:
+
+async def gather_context_node(state: MonitorState) -> dict[str, Any]:
     """整理时间轴和环境上下文"""
     logger.info(f"[Monitor] 正在整理事件 {state['incident_id']} 的环境上下文...")
     # TODO: 获取部署记录、变更记录
     context = {
         "recent_deployments": ["v1.2.3 deployed 15m ago"],
         "infrastructure": "AWS EKS",
-        "region": "us-east-1"
+        "region": "us-east-1",
     }
     # 更新状态机
     from src.sre.agents.shared.state import IncidentStatus
-    return {
-        "time_context": context,
-        "status": IncidentStatus.DIAGNOSING
-    }
+
+    return {"time_context": context, "status": IncidentStatus.DIAGNOSING}

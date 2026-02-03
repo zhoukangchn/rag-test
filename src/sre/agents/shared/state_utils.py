@@ -7,8 +7,8 @@ from src.sre.agents.shared.state import (
     ActionItem,
     ActionResult,
     IncidentStatus,
-    SREState,
     Severity,
+    SREState,
 )
 
 
@@ -20,10 +20,10 @@ def create_initial_state(
     max_iterations: int = 5,
 ) -> SREState:
     """创建初始事件状态"""
-    
+
     now = datetime.now()
     incident_id = f"INC-{now.strftime('%Y%m%d')}-{str(uuid4())[:8].upper()}"
-    
+
     return SREState(
         incident_id=incident_id,
         alert_source=alert_source,
@@ -60,7 +60,7 @@ def create_initial_state(
 
 def update_status(state: SREState, new_status: IncidentStatus, reason: str = "") -> SREState:
     """更新事件状态"""
-    
+
     return {
         **state,
         "previous_status": state["status"],
@@ -71,7 +71,7 @@ def update_status(state: SREState, new_status: IncidentStatus, reason: str = "")
 
 def add_action_to_plan(state: SREState, action: ActionItem) -> SREState:
     """添加操作到计划"""
-    
+
     current_plan = state.get("action_plan", [])
     return {
         **state,
@@ -82,7 +82,7 @@ def add_action_to_plan(state: SREState, action: ActionItem) -> SREState:
 
 def record_action_result(state: SREState, result: ActionResult) -> SREState:
     """记录操作执行结果"""
-    
+
     executed = state.get("executed_actions", [])
     return {
         **state,
@@ -93,10 +93,10 @@ def record_action_result(state: SREState, result: ActionResult) -> SREState:
 
 def get_current_hypothesis(state: SREState) -> dict | None:
     """获取当前选中的根因假设"""
-    
+
     idx = state.get("selected_hypothesis")
     hypotheses = state.get("root_cause_hypotheses", [])
-    
+
     if idx is not None and 0 <= idx < len(hypotheses):
         return hypotheses[idx]
     return None
@@ -104,14 +104,14 @@ def get_current_hypothesis(state: SREState) -> dict | None:
 
 def is_auto_approvable(state: SREState) -> bool:
     """检查当前操作是否可自动批准 (基于策略)"""
-    
+
     pending = state.get("pending_approval", [])
     if not pending:
         return True
-    
+
     # 策略：只有 QUERY/DIAGNOSTIC 类型可自动执行
     for action in pending:
         if action["type"] not in ["query", "diagnostic"]:
             return False
-    
+
     return True
