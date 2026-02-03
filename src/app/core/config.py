@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     max_iterations: int = 3
 
     # Database
+    db_type: str = "postgresql"
     db_host: str = "localhost"
     db_port: int = 5432
     db_user: str = "postgres"
@@ -37,6 +38,8 @@ class Settings(BaseSettings):
     @property
     def database_url(self) -> str:
         """根据配置生成异步数据库连接字符串"""
+        if self.db_type.lower() == "mysql":
+            return f"mysql+aiomysql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
         return f"postgresql+asyncpg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
 
     # API Auth (User & Password for URL calls)
