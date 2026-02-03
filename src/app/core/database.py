@@ -38,28 +38,28 @@ class DatabaseService:
         """获取数据库会话上下文管理器"""
         session = self._session_factory()
         try:
-            logger.debug("数据库会话已创建")
+            logger.debug("Database session created")
             yield session
             await session.commit()
-            logger.debug("数据库会话已提交")
+            logger.debug("Database session committed")
         except Exception:
             await session.rollback()
-            logger.error("数据库会话已回滚", exc_info=True)
+            logger.error("Database session rolled back", exc_info=True)
             raise
         finally:
             await session.close()
-            logger.debug("数据库会话已关闭")
+            logger.debug("Database session closed")
 
     async def init_db(self) -> None:
         """初始化数据库表"""
         async with self._engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-            logger.info("数据库表初始化完成")
+            logger.info("Database tables initialized successfully")
 
     async def close(self) -> None:
         """关闭数据库连接"""
         await self._engine.dispose()
-        logger.info("数据库引擎已关闭")
+        logger.info("Database engine closed")
 
 
 db_service = DatabaseService()
