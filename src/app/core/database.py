@@ -37,7 +37,7 @@ class DatabaseService:
             _validate_database_url(settings.database_url)
             self._engine = create_async_engine(
                 settings.database_url,
-                echo=settings.debug,
+                echo=False,  # 禁用全量 SQL 日志，防止老版本 MySQL (5.6) 或复杂环境下报错
                 pool_pre_ping=True,
                 pool_size=5,
                 max_overflow=10,
