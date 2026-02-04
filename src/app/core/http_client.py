@@ -1,7 +1,6 @@
 import asyncio
 import httpx
-from typing import Any, Dict, Optional, Union
-from src.app.core.logging import logger
+from typing import Dict, Optional
 from src.app.core.config import settings
 
 
@@ -10,8 +9,8 @@ class HTTPClient:
     A dual-mode (Async/Sync) HTTP client utility using httpx.
     Provides persistent connection pooling with configurable SSL verification and timeout.
     
-    Note: httpx does not support per-request `verify` overrides. SSL verification is set
-    at the client level. If you need different verify settings, create separate HTTPClient instances.
+    Returns raw httpx.Response objects for maximum flexibility.
+    Caller is responsible for parsing response body and handling errors.
     """
     def __init__(
         self, 
@@ -23,14 +22,13 @@ class HTTPClient:
         self.base_url = base_url
         # Use provided timeout, or config, or default 30.0
         self._default_timeout = timeout if timeout is not None else getattr(settings, "http_timeout", 30.0)
-        # Store the connect timeout separately for per-request overrides
         self._connect_timeout = 5.0
         self.timeout = httpx.Timeout(self._default_timeout, connect=self._connect_timeout)
         self.headers = headers or {
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
-        # SSL verification setting (only configurable at client level in httpx)
+        # SSL verification (only configurable at client level in httpx)
         self.verify = verify if verify is not None else getattr(settings, "http_verify_ssl", True)
         
         # Async members
@@ -40,10 +38,8 @@ class HTTPClient:
         # Sync members
         self._sync_client: Optional[httpx.Client] = None
 
-    # --- Timeout Helper ---
-
     def _get_timeout(self, timeout: Optional[float]) -> httpx.Timeout:
-        """Build httpx.Timeout object, preserving connect timeout for per-request overrides."""
+        """Build httpx.Timeout, preserving connect timeout for per-request overrides."""
         if timeout is not None:
             return httpx.Timeout(timeout, connect=self._connect_timeout)
         return self.timeout
@@ -68,59 +64,46 @@ class HTTPClient:
                 await self._async_client.aclose()
                 self._async_client = None
 
-    async def request_async(
+    async def request(
         self,
         method: str,
         endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-        json_data: Optional[Dict[str, Any]] = None,
+        params: Optional[Dict] = None,
+        json_data: Optional[Dict] = None,
         headers: Optional[Dict[str, str]] = None,
         timeout: Optional[float] = None,
         **kwargs
-    ) -> Any:
+    ) -> httpx.Response:
         """
-        Make an async HTTP request.
+        Make an async HTTP request. Returns raw httpx.Response.
         
-        Args:
-            method: HTTP method (GET, POST, etc.)
-            endpoint: URL endpoint
-            params: Query parameters
-            json_data: JSON body data
-            headers: Additional headers
-            timeout: Per-request timeout override (seconds)
-            **kwargs: Additional arguments passed to httpx.request()
+        Caller must:
+        - Check response.status_code or call response.raise_for_status()
+        - Parse body with response.json() or response.text
+        - Access headers via response.headers
         """
         client = await self.get_async_client()
-        request_timeout = self._get_timeout(timeout)
-        try:
-            response = await client.request(
-                method=method,
-                url=endpoint,
-                params=params,
-                json=json_data,
-                headers=headers,
-                timeout=request_timeout,
-                **kwargs
-            )
-            return self._handle_response(response, method, endpoint)
-        except Exception as e:
-            self._handle_error(e, method, endpoint)
+        return await client.request(
+            method=method,
+            url=endpoint,
+            params=params,
+            json=json_data,
+            headers=headers,
+            timeout=self._get_timeout(timeout),
+            **kwargs
+        )
 
-    async def get(self, endpoint: str, timeout: Optional[float] = None, **kwargs) -> Any:
-        """GET request (async)."""
-        return await self.request_async("GET", endpoint, timeout=timeout, **kwargs)
+    async def get(self, endpoint: str, timeout: Optional[float] = None, **kwargs) -> httpx.Response:
+        return await self.request("GET", endpoint, timeout=timeout, **kwargs)
 
-    async def post(self, endpoint: str, json_data: Optional[Dict[str, Any]] = None, timeout: Optional[float] = None, **kwargs) -> Any:
-        """POST request (async)."""
-        return await self.request_async("POST", endpoint, json_data=json_data, timeout=timeout, **kwargs)
+    async def post(self, endpoint: str, json_data: Optional[Dict] = None, timeout: Optional[float] = None, **kwargs) -> httpx.Response:
+        return await self.request("POST", endpoint, json_data=json_data, timeout=timeout, **kwargs)
 
-    async def put(self, endpoint: str, json_data: Optional[Dict[str, Any]] = None, timeout: Optional[float] = None, **kwargs) -> Any:
-        """PUT request (async)."""
-        return await self.request_async("PUT", endpoint, json_data=json_data, timeout=timeout, **kwargs)
+    async def put(self, endpoint: str, json_data: Optional[Dict] = None, timeout: Optional[float] = None, **kwargs) -> httpx.Response:
+        return await self.request("PUT", endpoint, json_data=json_data, timeout=timeout, **kwargs)
 
-    async def delete(self, endpoint: str, timeout: Optional[float] = None, **kwargs) -> Any:
-        """DELETE request (async)."""
-        return await self.request_async("DELETE", endpoint, timeout=timeout, **kwargs)
+    async def delete(self, endpoint: str, timeout: Optional[float] = None, **kwargs) -> httpx.Response:
+        return await self.request("DELETE", endpoint, timeout=timeout, **kwargs)
 
     # --- Synchronous Implementation ---
 
@@ -144,79 +127,39 @@ class HTTPClient:
         self,
         method: str,
         endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-        json_data: Optional[Dict[str, Any]] = None,
+        params: Optional[Dict] = None,
+        json_data: Optional[Dict] = None,
         headers: Optional[Dict[str, str]] = None,
         timeout: Optional[float] = None,
         **kwargs
-    ) -> Any:
-        """
-        Make a sync HTTP request.
-        
-        Args:
-            method: HTTP method (GET, POST, etc.)
-            endpoint: URL endpoint
-            params: Query parameters
-            json_data: JSON body data
-            headers: Additional headers
-            timeout: Per-request timeout override (seconds)
-            **kwargs: Additional arguments passed to httpx.request()
-        """
+    ) -> httpx.Response:
+        """Make a sync HTTP request. Returns raw httpx.Response."""
         client = self.get_sync_client()
-        request_timeout = self._get_timeout(timeout)
-        try:
-            response = client.request(
-                method=method,
-                url=endpoint,
-                params=params,
-                json=json_data,
-                headers=headers,
-                timeout=request_timeout,
-                **kwargs
-            )
-            return self._handle_response(response, method, endpoint)
-        except Exception as e:
-            self._handle_error(e, method, endpoint)
+        return client.request(
+            method=method,
+            url=endpoint,
+            params=params,
+            json=json_data,
+            headers=headers,
+            timeout=self._get_timeout(timeout),
+            **kwargs
+        )
 
-    def get_sync(self, endpoint: str, timeout: Optional[float] = None, **kwargs) -> Any:
-        """GET request (sync)."""
+    def get_sync(self, endpoint: str, timeout: Optional[float] = None, **kwargs) -> httpx.Response:
         return self.request_sync("GET", endpoint, timeout=timeout, **kwargs)
 
-    def post_sync(self, endpoint: str, json_data: Optional[Dict[str, Any]] = None, timeout: Optional[float] = None, **kwargs) -> Any:
-        """POST request (sync)."""
+    def post_sync(self, endpoint: str, json_data: Optional[Dict] = None, timeout: Optional[float] = None, **kwargs) -> httpx.Response:
         return self.request_sync("POST", endpoint, json_data=json_data, timeout=timeout, **kwargs)
 
-    def put_sync(self, endpoint: str, json_data: Optional[Dict[str, Any]] = None, timeout: Optional[float] = None, **kwargs) -> Any:
-        """PUT request (sync)."""
+    def put_sync(self, endpoint: str, json_data: Optional[Dict] = None, timeout: Optional[float] = None, **kwargs) -> httpx.Response:
         return self.request_sync("PUT", endpoint, json_data=json_data, timeout=timeout, **kwargs)
 
-    def delete_sync(self, endpoint: str, timeout: Optional[float] = None, **kwargs) -> Any:
-        """DELETE request (sync)."""
+    def delete_sync(self, endpoint: str, timeout: Optional[float] = None, **kwargs) -> httpx.Response:
         return self.request_sync("DELETE", endpoint, timeout=timeout, **kwargs)
-
-    # --- Common Helpers ---
-
-    def _handle_response(self, response: httpx.Response, method: str, endpoint: str) -> Any:
-        response.raise_for_status()
-        if response.status_code == 204:
-            return None
-        
-        content_type = response.headers.get("content-type", "")
-        if "application/json" in content_type:
-            return response.json()
-        return response.text
-
-    def _handle_error(self, e: Exception, method: str, endpoint: str):
-        if isinstance(e, httpx.HTTPStatusError):
-            logger.error(f"HTTP {e.response.status_code} for {method} {endpoint}: {e.response.text[:200]}")
-        else:
-            logger.error(f"Request failed for {method} {endpoint}: {str(e)}")
-        raise e
 
 
 # Global shared instance (uses settings.http_verify_ssl for SSL verification)
 http_client = HTTPClient()
 
-# Convenience: Pre-configured insecure client for internal APIs
-# Usage: from src.app.core.http_client import insecure_client
+# Pre-configured insecure client for internal APIs
 insecure_client = HTTPClient(verify=False)
