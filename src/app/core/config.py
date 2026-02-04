@@ -30,6 +30,7 @@ class Settings(BaseSettings):
 
     # HTTP Client
     http_verify_ssl: bool = True
+    http_timeout: float = 30.0
 
     # Database
     db_type: str = "postgresql"

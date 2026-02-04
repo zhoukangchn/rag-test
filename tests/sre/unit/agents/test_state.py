@@ -42,7 +42,7 @@ class TestSREState:
             title="Test",
         )
 
-        new_state = update_status(state, IncidentStatus.DIAGNOSING, "开始诊断")
+        new_state = update_status(state, IncidentStatus.DIAGNOSING)
 
         assert new_state["status"] == IncidentStatus.DIAGNOSING
         assert new_state["previous_status"] == IncidentStatus.MONITORING

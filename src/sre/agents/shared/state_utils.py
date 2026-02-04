@@ -58,7 +58,7 @@ def create_initial_state(
     )
 
 
-def update_status(state: SREState, new_status: IncidentStatus, reason: str = "") -> SREState:
+def update_status(state: SREState, new_status: IncidentStatus) -> SREState:
     """更新事件状态"""
 
     return {
@@ -110,8 +110,4 @@ def is_auto_approvable(state: SREState) -> bool:
         return True
 
     # 策略：只有 QUERY/DIAGNOSTIC 类型可自动执行
-    for action in pending:
-        if action["type"] not in ["query", "diagnostic"]:
-            return False
-
-    return True
+    return all(action["type"] in ["query", "diagnostic"] for action in pending)
