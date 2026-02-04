@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     # Agent
     max_iterations: int = 3
 
+    # HTTP Client
+    http_verify_ssl: bool = True
+
     # Database
     db_type: str = "postgresql"
     db_host: str = "localhost"

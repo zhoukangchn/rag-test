@@ -2,6 +2,7 @@ import asyncio
 import httpx
 from typing import Any, Dict, Optional
 from src.app.core.logging import logger
+from src.app.core.config import settings
 
 class HTTPClient:
     """
@@ -13,7 +14,7 @@ class HTTPClient:
         base_url: str = "", 
         timeout: float = 30.0,
         headers: Optional[Dict[str, str]] = None,
-        verify: bool = True
+        verify: Optional[bool] = None
     ):
         self.base_url = base_url
         self.timeout = httpx.Timeout(timeout, connect=5.0)
@@ -21,7 +22,8 @@ class HTTPClient:
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
-        self.verify = verify
+        # Use provided verify or fallback to global settings
+        self.verify = verify if verify is not None else settings.http_verify_ssl
         
         # Async members
         self._async_client: Optional[httpx.AsyncClient] = None
