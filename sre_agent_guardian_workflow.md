@@ -37,7 +37,7 @@ graph TD
 
     %% Phase 3: Incident Response
     subgraph Phase 3: Incident Response
-        Failure --> AutoLock[🔒 Global Lock Active\n(Next Batch Blocked)]
+        Failure --> AutoLock[🔒 Global Lock Active<br/>Next Batch Blocked]
         AutoLock --> Suggest[💡 Suggestion: Rollback]
         
         User -->|Attempts Force Continue| Intercept{🛡️ Agent Intercept}
